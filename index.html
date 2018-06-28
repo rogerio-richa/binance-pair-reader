@@ -1,0 +1,60 @@
+<html>
+    <head>
+        <title></title>
+        <meta charset="utf-8" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+        <!-- script src="node_modules/chart.js/dist/Chart.js"></script-->
+    </head>
+    <body>
+        hello <br>
+        
+        <canvas id="myChart" width="100" height="40"></canvas>
+        <script>
+            
+            // var x = [0, 1, 2, 3, 4, 5, 6, 7];
+            // var y = [20, 15, 60, 60, 65, 30, 70];
+            var x = [__x__]
+            var y = [__y__]
+
+            var chartOptions = {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                    boxWidth: 80,
+                    fontColor: 'black'
+                    }
+                }
+            };
+
+            var dataSecond = {
+                label: "Car B - Speed (mph)",
+                data: y,
+                lineTension: 0.3,
+                fill: false,
+                borderColor: 'purple',
+                backgroundColor: 'transparent',
+                pointBorderColor: 'purple',
+                pointBackgroundColor: 'lightgreen',
+                pointRadius: 5,
+                pointHoverRadius: 15,
+                pointHitRadius: 30,
+                pointBorderWidth: 2
+            };
+
+            Chart.defaults.global.defaultFontSize = 12 ;
+            Chart.defaults.global.defaultFontFamily = "Lato";
+
+            var ctx = document.getElementById("myChart").getContext('2d');
+
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [dataSecond]
+                },
+                options: chartOptions
+            });
+        </script>
+    </body>
+</html>
