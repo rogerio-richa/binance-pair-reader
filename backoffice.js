@@ -4,17 +4,19 @@ var request = require("request");
 const TelegramBot = require('node-telegram-bot-api');
 
 // Telegram settings
-const token = '';
+const token = '615920500:AAE4V_v1EYVBHsUFO3gZ87vcLI4ob_7zSlg';
 const chatId = "-284111032";
 const bot = new TelegramBot(token, {polling: true});
 
 // Plotter stuff
-const numberOfSeconds = 60*60*24*2; // 2 days
-const timerExpiration = 60*5; // 5 min
+const numberOfDays = 60*60*24*2; 
+const valHistory = 60*5;
+const timerExpiration = 60*2; // min
 const thresholdAlarm = 5 // %
 
 var values = [];
-var timer = []
+var dates = [];
+var timer = [];
 
 // Binance stuff
 const interval = 1000; //ms
@@ -44,14 +46,32 @@ setInterval (function() {
             for (var i=0; i < result.length; i++) {
 
                 values.push({symbol: result[i].symbol,
-                             price: [result[i].price],
-                             dates: [now.toISOString()]});
+                             price: [result[i].price] });
                 
                 timer.push(0);
             }
 
+            dates.push(now.toISOString());
+
             return;
         }
+
+        if (values.length != result.length) {
+
+            console.log("New pairs seem to have been added. Please restart server!");
+        }
+
+        if (dates.length > numberOfDays) {
+
+            dates.shift();
+
+            for (var i=0; i < dates.length; i++) {
+
+                values[i].price.shift();
+            }
+        }
+
+        dates.push(now);
 
         for (var i=0; i < result.length; i++) {
 
@@ -66,26 +86,18 @@ setInterval (function() {
                 }
             }
 
-            if (values[index].price.length > numberOfSeconds) {
-
-                values[index].price.shift();
-                values[index].dates.shift();
-            }
-
             values[index].price.push(result[i].price);
-            values[index].dates.push(now);
-
             timer[index]--;
-        }
-
-        if (values.length != result.length) {
-
-            console.log("New pairs seem to have been added. Please restart server!");
         }
 
         for (var i=0; i < values.length; i++) {
             
-            var diff = 100*(values[i].price[0] - values[i].price[values[i].price.length-1])/values[i].price[0];
+            // run some metric
+            var numberSamples = values[i].price.length - 1;
+            var lastPrice = values[i].price[numberSamples];
+            var refPrice = values[i].price[numberSamples - valHistory];
+
+            var diff = 100*(refPrice - lastPrice)/refPrice;
 
             if ( Math.abs(diff) > thresholdAlarm && timer[i] <= 0) {
 
@@ -95,20 +107,13 @@ setInterval (function() {
                 bot.sendMessage(chatId, msg);
                 timer[i] = timerExpiration;
             }
-        }
 
-        // Feed data to browsers listening 
-        for (var i=0; i < cli.length; i++) {
+            // send data to browser
+            for (var j=0; j < cli.length; j++) {
 
-            if (cli[i].pair != "") {
+                if (cli[j].pair == "\"" + values[i].symbol + "\"") {
 
-                for (var j=0; j < values.length; j++) {
-
-                    if (cli[i].pair == "\""+values[j].symbol+"\"") {
-                        
-                        var lastItem = values[j].price.length - 1;                        
-                        sendData(cli[i].connection, values[j].price[lastItem], values[j].dates[lastItem]);
-                    }
+                    sendData(cli[j].connection, values[i].price[numberSamples], dates[numberSamples]);
                 }
             }
         }
@@ -175,7 +180,7 @@ wss.on('connection', function connection(ws,req) {
 
                     if (cli[i].pair == "\""+values[j].symbol+"\"") {
                         
-                        sendBulkData(cli[i].connection, values[j].price, values[j].dates);
+                        sendBulkData(cli[i].connection, values[j].price, dates);
                     }
                 }                
             }
@@ -195,7 +200,6 @@ wss.on('connection', function connection(ws,req) {
         }
     });
 });
-
 
 function sendData(client, val, date) {
     

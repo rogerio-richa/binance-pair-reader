@@ -13,7 +13,7 @@
 <script>
 
         const symbol = '[symbol]';
-        const plotTimeWindow = 60*60*24*2;
+        const plotTimeWindow = 60*60*24*2/100;
         var interval;
         var websocket;
         
@@ -63,6 +63,7 @@
         }
         
         function initWebSocket(wsUri) {
+          
           var ws = new WebSocket(wsUri);
           ws.onopen = onConnect;
           ws.onclose = onClose;
@@ -71,10 +72,36 @@
           return ws;
         }
         
+        var numberSkipped = 0;
+
         function updateChart(wsEvent) {
           
           var newData = JSON.parse(wsEvent.data);
-          chartData.push.apply(chartData, newData);
+          var processedData = [];
+          
+          if (newData.length > 1) {
+
+            processedData.push(newData[0]);
+
+            for (var i=1; i < newData.length; i+= 100) {
+
+                processedData.push(newData[i]);
+            }
+          } 
+          else {
+            
+              if (numberSkipped > 10) {
+              
+                numberSkipped = 0;
+                processedData.push(newData[0]);
+              } 
+              else {
+
+                numberSkipped++
+              }
+          }
+
+          chartData.push.apply(chartData, processedData);
           if (chartData.length > plotTimeWindow) {
             chartData.splice(0, chartData.length - plotTimeWindow);
           }
@@ -83,14 +110,15 @@
         
         function onConnect(wsEvent) {
 
-          websocket.send(JSON.stringify(symbol));
+            websocket.send(JSON.stringify(symbol));
         }
         
         function onError(wsEvent) {
         }
         
         function onClose(wsEvent) {
-          clearInterval(interval);
+            
+            clearInterval(interval);
         }
         
         </script>
