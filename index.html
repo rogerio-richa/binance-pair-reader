@@ -12,12 +12,12 @@
 <div id="chartdiv" style="height: 400px;"></div>
 <script>
 
-        const symbol = '[symbol]';
+        const symbol = 'BTCUSD';
         const plotTimeWindow = 60*60*24*2/100;
         var interval;
         var websocket;
         
-        var websocketEchoServerUri = "ws://127.0.0.1:8081/"
+        var websocketEchoServerUri = "ws://127.0.0.1:8081"; // "wss://bot.cellcrypt.com/"
         var chartData = []; //will be updated by our simulated server
         var startButton = document.getElementById('start-demo');
         var endButton = document.getElementById('end-demo');
@@ -46,9 +46,9 @@
           "dataProvider": chartData
         });
           
-        startButton.addEventListener('click', startDemo);
+        //startButton.addEventListener('click', startDemo);
         endButton.addEventListener('click', endDemo);
-        
+
         function startDemo() {
           startButton.disabled = "disabled";
           endButton.disabled = "";
@@ -121,6 +121,7 @@
             clearInterval(interval);
         }
         
+        startDemo();
         </script>
 </body>
 </html>
